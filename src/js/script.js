@@ -49,6 +49,13 @@
     render() {
       const thisBook = this;
 
+      const rating = thisBook.data.rating;
+      const ratingBgc = thisBook.determineRatingBgc(rating);
+      const ratingWidth = rating* 10;
+
+      thisBook.data.ratingBgc = ratingBgc;
+      thisBook.data.ratingWidth = ratingWidth;
+
       // generate HTMLL based on template
       const generatedHTML = templates.book(thisBook.data);
 
@@ -89,6 +96,18 @@
         } else {
           thisBook.dom.bookImage.classList.remove(classNames.book.bookHidden);
         }
+      }
+    }
+
+    determineRatingBgc(rating) {
+      if(rating < 6) {
+        return 'background: linear-gradient(to bottom,  #fefcea 0%, #f1da36 100%);';
+      } else if(rating > 6 && rating <= 8) {
+        return 'background: linear-gradient(to bottom, #b4df5b 0%,#b4df5b 100%);';
+      } else if(rating > 8 && rating <= 9) {
+        return 'background: linear-gradient(to bottom, #299a0b 0%, #299a0b 100%);';
+      } else if(rating > 9) {
+        return 'background: linear-gradient(to bottom, #ff0084 0%,#ff0084 100%);';
       }
     }
 
