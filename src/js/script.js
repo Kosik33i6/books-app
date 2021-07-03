@@ -11,6 +11,11 @@
     book: {
       bookImage: '.book__image',
     },
+    widgets: {
+      filters: {
+        sectionFilters: '.filters',
+      },
+    },
   };
 
   const templates = {
@@ -20,6 +25,13 @@
   const classNames = {
     book: {
       bookFavorite: 'favorite',
+      bookHidden: 'hidden',
+    },
+  };
+
+  const settings = {
+    arrays: {
+      deleteCount: 1,
     },
   };
 
@@ -31,6 +43,7 @@
       thisBook.data = data;
       thisBook.dom ={};
       thisBook.dom.bookContainer = bookContainer;
+      // console.log(thisBook.data);
     }
 
     render() {
@@ -65,12 +78,31 @@
       thisBook.announce();
     }
 
+    filterBooks(detailData) {
+      const thisBook = this;
+      const bookDetails = thisBook.data.details;
+
+      for(let paramId in bookDetails) {
+        if(bookDetails[paramId] === true && detailData.includes(paramId)) {
+          thisBook.dom.bookImage.classList.add(classNames.book.bookHidden);
+          return;
+        } else {
+          thisBook.dom.bookImage.classList.remove(classNames.book.bookHidden);
+        }
+      }
+    }
+
     initActions() {
       const thisBook = this;
 
       thisBook.element.addEventListener('dblclick', function(event) {
         event.preventDefault();
         thisBook.toggleClassHandler();
+      });
+
+      document.body.addEventListener('filter', function(event) {
+        const detailData = event.detail;
+        thisBook.filterBooks(detailData);
       });
     }
 
@@ -95,6 +127,56 @@
     }
   }
 
+  class FiltersWidget {
+    constructor(element) {
+      const thisFiltersWidget = this;
+
+      thisFiltersWidget.element = element;
+      thisFiltersWidget.filters = [];
+    }
+
+    initActions() {
+      const thisFiltersWidget = this;
+
+      thisFiltersWidget.element.addEventListener('change', function(event) {
+        thisFiltersWidget.setValue(event);
+      });
+    }
+
+    setValue(event) {
+      const thisFiltersWidget = this;
+      const element = event.target;
+      const condision = typeof element === 'object' && element.nodeName === 'INPUT' && element.type === 'checkbox' && element.name === 'filter';
+
+      if(condision) {
+        if(element.checked && !thisFiltersWidget.filters.includes(element.value)) {
+          thisFiltersWidget.filters.push(element.value);
+        } else {
+          const index = thisFiltersWidget.filters.indexOf(element.value);
+          thisFiltersWidget.filters.splice(index, settings.arrays.deleteCount);
+        }
+      }
+
+      thisFiltersWidget.filter();
+    }
+
+    filter() {
+      const thisFiltersWidget = this;
+
+      const event = new CustomEvent('filter', {
+        bubbles: true,
+        detail: thisFiltersWidget.filters,
+      });
+      thisFiltersWidget.element.dispatchEvent(event);
+    }
+
+    init() {
+      const thisFiltersWidget = this;
+
+      thisFiltersWidget.initActions();
+    }
+  }
+
   class BooksList {
     constructor(data) {
       const thisBooksList = this;
@@ -108,6 +190,14 @@
 
       thisBooksList.dom = {};
       thisBooksList.dom.element = document.querySelector(select.containerOf.booksList);
+      thisBooksList.dom.filterWidget = document.querySelector(select.widgets.filters.sectionFilters);
+    }
+
+    initFiltersWidget() {
+      const thisBooksList = this;
+
+      thisBooksList.filtersWidget = new FiltersWidget(thisBooksList.dom.filterWidget);
+      thisBooksList.filtersWidget.init();
     }
 
     initBooks(booksData) {
@@ -137,8 +227,7 @@
         thisBooksList.favoriteBooks.push(id);
       } else {
         const index = thisBooksList.favoriteBooks.indexOf(id);
-        const deleteCount = 1;
-        thisBooksList.favoriteBooks.splice(index, deleteCount);
+        thisBooksList.favoriteBooks.splice(index, settings.arrays.deleteCount);
       }
     }
 
@@ -148,6 +237,7 @@
       thisBooksList.getElements();
       thisBooksList.initBooks(thisBooksList.data.books);
       thisBooksList.initActions();
+      thisBooksList.initFiltersWidget();
     }
   }
 
